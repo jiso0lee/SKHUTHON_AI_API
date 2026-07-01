@@ -4,6 +4,7 @@ import requests
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from fastapi import FastAPI
 
 # ==========================================
 # 0. 보안: .env 파일에서 환경 변수 불러오기
@@ -201,5 +202,16 @@ def run_daily_ai_analysis():
         except Exception as e:
             print(f"❌ 백엔드 전송 최종 실패: {e}")
 
-if __name__ == "__main__":
+# FastAPI 웹 서버 세팅
+app = FastAPI()
+
+# 1. Render가 서버가 살아있는지 확인하기 위한 기본 주소 (Health Check)
+@app.get("/")
+def health_check():
+    return {"message": "AI Server is running perfectly!"}
+
+# 2. 백엔드에서 특정 주소로 요청을 보내면 AI 분석 코드가 실행되도록 연결
+@app.get("/run-ai")
+def trigger_ai_analysis():
     run_daily_ai_analysis()
+    return {"message": "AI analysis triggered and completed."}
