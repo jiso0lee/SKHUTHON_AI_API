@@ -183,7 +183,7 @@ def run_daily_ai_analysis():
                 # 최종 데이터 딕셔너리 구성
                 final_payload.append({
                     "id": diary_id, 
-                    "ai_comment": matched_comment
+                    "aiComment": matched_comment
                 })
             
         except Exception as e:
