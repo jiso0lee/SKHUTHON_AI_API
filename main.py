@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import requests
 from dotenv import load_dotenv
 from google import genai
@@ -189,6 +190,10 @@ def run_daily_ai_analysis():
         except Exception as e:
             print(f"❌ [{age_group}] AI 분석 중 오류 발생: {e}")
             continue
+
+        # API 호출이 하나 끝날 때마다 15초씩 대기
+        print("⏳ API 속도 제한 방지를 위해 15초 대기 중...")
+        time.sleep(15)
 
     # [STEP 5] 모든 데이터를 백엔드 서버에 단 한 번의 요청으로 일괄 전송 (Batch)
     if final_payload:
