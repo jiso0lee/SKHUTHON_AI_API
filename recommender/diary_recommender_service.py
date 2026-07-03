@@ -32,8 +32,11 @@ class DiaryRecommender:
             return
         self.ids = list(self.diaries.keys())
         corpus = [self._tokenize(self.diaries[i]["text"]) for i in self.ids]
-        self.vectorizer = TfidfVectorizer(token_pattern=r"(?u)\b\w+\b")
-        self.tfidf = self.vectorizer.fit_transform(corpus)
+        try:
+            self.vectorizer = TfidfVectorizer(token_pattern=r"(?u)\b\w+\b")
+            self.tfidf = self.vectorizer.fit_transform(corpus)
+        except ValueError:
+            self.tfidf = self.vectorizer = None
 
     def upsert(self, diary_id, user_id, text):
         self.diaries[diary_id] = {"user_id": user_id, "text": text}
@@ -51,6 +54,8 @@ class DiaryRecommender:
     def similar_diaries(self, diary_id, top_k=5):
         if diary_id not in self.diaries:
             raise KeyError(diary_id)
+        if self.tfidf is None:
+            return []
         row = self.ids.index(diary_id)
         sims = cosine_similarity(self.tfidf[row], self.tfidf).flatten()
         sims[row] = -1
@@ -62,6 +67,8 @@ class DiaryRecommender:
         user_ids = {d["user_id"] for d in self.diaries.values()}
         if user_id not in user_ids:
             raise KeyError(user_id)
+        if self.tfidf is None:
+            return []
 
         def profile(uid):
             rows = [self.ids.index(did) for did, d in self.diaries.items()
@@ -83,7 +90,7 @@ class DiaryRecommender:
 
     def recommend_by_texts(self, base_texts, exclude_user_ids=(), top_k=5):
         if self.vectorizer is None:
-            raise KeyError("색인이 비어있습니다 (먼저 일기를 색인하세요)")
+            return []
         joined = " ".join(self._tokenize(t) for t in base_texts)
         base_vec = self.vectorizer.transform([joined])
 
@@ -163,9 +170,6 @@ def recommend_by_recent(req: RecommendRequest):
     if not req.diaries:
         raise HTTPException(400, "기준 일기(diaries)가 비어있습니다")
     base_texts = [d.text for d in req.diaries]
-    my_user_ids = {d.memberId for d in req.diaries}   
-    try:
-        results = engine.recommend_by_texts(base_texts, my_user_ids, req.top_k)
-        return {"based_on": [d.id for d in req.diaries], "results": results}
-    except KeyError as e:
-        raise HTTPException(404, str(e))
+    my_user_ids = {d.memberId for d in req.diaries}
+    results = engine.recommend_by_texts(base_texts, my_user_ids, req.top_k)
+    return {"based_on": [d.id for d in req.diaries], "results": results}

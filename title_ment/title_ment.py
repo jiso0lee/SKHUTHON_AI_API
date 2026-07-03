@@ -3,7 +3,7 @@
 POST /generate-mood-message
 
 실행: uvicorn title_recommend:app --host 0.0.0.0 --port 8000
-환경변수: OPENAI_API_KEY 필요
+환경변수: GPT_API_KEY 필요
 """
 import os
 import json
@@ -20,11 +20,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mood-message")
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GPT_API_KEY = os.getenv("GPT_API_KEY", "")
 MODEL_NAME = "gpt-4o-mini"
 
 client = OpenAI(
-    api_key=OPENAI_API_KEY or "not-set",
+    api_key=GPT_API_KEY or "not-set",
     timeout=4.0,
     max_retries=0,
 )
