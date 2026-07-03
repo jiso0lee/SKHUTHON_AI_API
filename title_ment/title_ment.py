@@ -11,7 +11,7 @@ import time
 import logging
 
 from dotenv import load_dotenv
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
@@ -65,14 +65,6 @@ EMOTION_GUIDE = {
     50: "보통인 하루 → 평범한 날도 소중하다고 위로, 쉬어가도 된다고",
     25: "부정적인 하루 → 힘든 감정 공감하고 따뜻하게 다독임",
     0: "매우 힘든 하루 → 깊이 공감하고 쉬어도 된다고 위로",
-}
-
-FALLBACK_MESSAGES = {
-    100: "빛나는 마음들이 모인 하루였어요, 이 따뜻한 에너지 오래오래 간직하길 바라요 ✨",
-    75: "잘 지내고 있는 마음들이 느껴져요, 스스로를 충분히 칭찬해줘도 좋아요 🌿",
-    50: "평범해 보이는 순간들도 모두 소중한 시간이에요, 가끔은 쉬어가도 괜찮아요 ☁️",
-    25: "마음이 무거운 분들이 많았네요, 그 감정도 충분히 소중하니 스스로를 다독여주세요 🍀",
-    0: "많이 힘들었을 마음들에게, 잠시 멈춰 쉬어도 괜찮다고 말해주고 싶어요 🌙",
 }
 
 CACHE_TTL = 3600
@@ -159,10 +151,6 @@ def parse_ai_message(raw_text: str) -> str | None:
         return None
 
 
-def get_fallback(emotion: int) -> str:
-    return FALLBACK_MESSAGES.get(emotion, FALLBACK_MESSAGES[50])
-
-
 @router.get("/")
 def health():
     return {"status": "ok", "service": "mood-message-api"}
@@ -195,15 +183,14 @@ def generate_mood_message(req: MoodRequest):
             response_format={"type": "json_object"},
         )
         message = parse_ai_message(completion.choices[0].message.content)
-
-        if message:
-            cache_set(cache_key, message)
-            logger.info(f"generated: {cache_key} -> {message}")
-            return MoodResponse(message=message)
-
-        logger.warning("parse failed, falling back")
     except Exception as e:
         logger.error(f"openai error: {e}")
+        raise HTTPException(status_code=502, detail="AI 메시지 생성에 실패했습니다.")
 
-    
-    return MoodResponse(message=get_fallback(req.representativeEmotion))
+    if not message:
+        logger.warning("parse failed")
+        raise HTTPException(status_code=502, detail="AI 메시지 생성에 실패했습니다.")
+
+    cache_set(cache_key, message)
+    logger.info(f"generated: {cache_key} -> {message}")
+    return MoodResponse(message=message)
