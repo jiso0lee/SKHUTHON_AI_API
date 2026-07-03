@@ -88,6 +88,13 @@ EXTRACT_SYSTEM_PROMPT = """너는 일기에서 '나중에 알람으로 챙겨줄
 2) pattern: "X하면 기분이 좋아진다/나빠진다" 감정 규칙
 3) care   : 지금 일기가 많이 힘들어 보임 (누적 판단은 백엔드가 함)
 
+[시각 처리 규칙]
+- 일기에 구체적 시각이 있으면 alarm_time을 "HH:mm"(24시간제)로 변환한다.
+  예: "오후 3시" → "15:00", "아침 8시반" → "08:30", "저녁 7시" → "19:00", "밤 11시" → "23:00"
+- 구체적 시각이 없으면 alarm_time을 대략적 시간대로:
+  아침 느낌 → "morning", 낮 → "afternoon", 저녁/밤 → "evening"
+- 시간 정보가 아예 없으면 event는 "morning", care는 "evening", pattern은 null.
+
 확실하지 않으면 넣지 마라(환각 금지). 진단/병명 금지.
 """
 
@@ -113,7 +120,7 @@ EXTRACT_SCHEMA = {
                             "action": {"type": ["string", "null"]},
                             "effect": {"type": ["string", "null"], "enum": ["positive", "negative", None]},
                             "reason": {"type": ["string", "null"]},
-                            "alarm_time": {"type": ["string", "null"], "enum": ["morning", "afternoon", "evening", None]},
+                            "alarm_time": {"type": ["string", "null"], "description": "구체적 시각이면 HH:mm(예 15:00), 없으면 morning/afternoon/evening, 아예 없으면 null"},
                         },
                         "required": ["type", "target_date", "topic", "emotion",
                                      "trigger_emotion", "action", "effect", "reason", "alarm_time"],
