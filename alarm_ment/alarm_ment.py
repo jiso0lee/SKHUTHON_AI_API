@@ -239,19 +239,3 @@ def health_check():
 def trigger_ai_analysis():
     run_daily_ai_analysis()
     return {"message": "AI analysis triggered and completed."}
-
-# ==========================================
-# 5. FastAPI 웹 서버 세팅
-# ==========================================
-app = FastAPI()
-
-# Render가 서버가 살아있는지 확인하기 위한 기본 주소 (Health Check)
-@app.get("/")
-def health_check():
-    return {"message": "AI Server is running perfectly!"}
-
-# 백엔드에서 특정 주소로 요청을 보내면 AI 분석 코드가 실행되도록 연결
-@app.get("/run-ai")
-def trigger_ai_analysis():
-    run_daily_ai_analysis()
-    return {"message": "AI analysis triggered and completed."}
