@@ -1,0 +1,3 @@
+-r alarm_ment/requirements.txt
+-r recommender/requirements.txt
+-r title_ment/requirements.txt
