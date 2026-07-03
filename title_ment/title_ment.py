@@ -2,7 +2,7 @@
 청춘잇다 - AI 응원 메시지 생성 서버 (OpenAI GPT)
 POST /generate-mood-message
 
-실행: uvicorn main:app --host 0.0.0.0 --port 8000
+실행: uvicorn title_recommend:app --host 0.0.0.0 --port 8000
 환경변수: OPENAI_API_KEY 필요
 """
 import os
